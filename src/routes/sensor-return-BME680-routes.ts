@@ -1,12 +1,7 @@
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-
-let lastSensorData: {
-  temperature: number;
-  humidity: number;
-  pressure: number;
-  gasResistance: number;
-} | null = null;
+import { sensorBME680 } from "../drizzle/schema/sensorBME680";
+import { db } from "../drizzle/client";
 
 export const sensorReturnBME680Routes: FastifyPluginAsyncZod = async (app) => {
   app.get(
@@ -15,24 +10,36 @@ export const sensorReturnBME680Routes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         response: {
           200: z.union([
-            z.object({
-              temperature: z.number(),
-              humidity: z.number(),
-              pressure: z.number(),
-              gasResistance: z.number(),
-            }),
+            z.array(z.object({
+              id: z.string(),
+              temperature: z.string(),
+              humidity: z.string(),
+              pressure: z.string(),
+              airQuality: z.string(),
+              created_at: z.date(),
+            })),
             z.object({
               message: z.string(),
             }),
           ]),
+          500: z.object({
+            message: z.string(),
+          }),
         },
       },
     },
     async (_, reply) => {
-		if (!lastSensorData) {
-			return reply.status(200).send({ message: "Sem dados" });
+		try {
+			const sensorData = await db.select().from(sensorBME680);
+			
+			if (sensorData.length === 0) {
+				return reply.status(200).send({ message: "Sem dados" });
+			}
+			
+			return reply.status(200).send(sensorData);
+		} catch (error) {
+			return reply.status(500).send({ message: "Erro ao buscar dados do sensor" });
 		}
-		return reply.status(200).send(lastSensorData);		  
     },
   );
 };
