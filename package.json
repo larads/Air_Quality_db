@@ -20,7 +20,7 @@
     "fastify-type-provider-zod": "^6.0.0",
     "ioredis": "^5.8.0",
     "postgres": "^3.4.7",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.5",
